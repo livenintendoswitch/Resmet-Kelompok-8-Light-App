@@ -1,5 +1,9 @@
 #!/bin/sh
 
+echo "waiting for db to initialize..."
+
+sleep 25
+
 echo "Booting Backend on Port 3001..."
 cd backend
 npm start &
