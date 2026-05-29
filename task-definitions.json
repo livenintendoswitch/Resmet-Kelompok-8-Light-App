@@ -8,7 +8,7 @@
   "containerDefinitions": [
     {
       "name": "LightWeightApp",
-      "image": "633630779109.dkr.ecr.ap-southeast-3.amazonaws.com/resmet-light-app:latest",
+      "image": "633630779109.dkr.ecr.ap-southeast-3.amazonaws.com/resmetkelompok8lightapp:latest",
       "essential": true,
       "environment": [
         { "name": "NODE_ENV", "value": "production" },

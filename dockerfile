@@ -11,5 +11,4 @@ RUN cd frontend && npm install serve
 EXPOSE 3000
 EXPOSE 3001
 
-# Run the dual-boot script
 CMD ["sh", "start.sh"]
