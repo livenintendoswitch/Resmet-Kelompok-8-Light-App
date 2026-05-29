@@ -1,11 +1,14 @@
 #!/bin/sh
 
-echo "waiting for db to initialize..."
+echo "Waiting 10 seconds for Database to initialize..."
+sleep 15
 
-sleep 25
+echo "Running Database Migrations..."
+cd backend
+npx sequelize-cli db:migrate
+npx sequelize-cli db:seed:all
 
 echo "Booting Backend on Port 3001..."
-cd backend
 npm start &
 
 echo "Building static React frontend..."
