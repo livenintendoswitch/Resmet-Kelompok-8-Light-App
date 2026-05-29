@@ -1,4 +1,4 @@
-import axios from "axios";
+import { api as axios } from "./apiConfig";
 import errorHandler from "../helpers/errorHandler";
 
 async function userLogin({ email, password }) {

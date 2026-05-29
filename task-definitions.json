@@ -1,0 +1,68 @@
+{
+  "family": "light-app-task",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::633630779109:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "LightWeightApp",
+      "image": "633630779109.dkr.ecr.ap-southeast-3.amazonaws.com/resmet-light-app:latest",
+      "essential": true,
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PROD_DB_NAME", "value": "benchmark_db" },
+        { "name": "PROD_DB_HOSTNAME", "value": "127.0.0.1" },
+        { "name": "PROD_DB_USERNAME", "value": "benchmark_user" },
+        { "name": "PROD_DB_PASSWORD", "value": "ambatunat" },
+        { "name": "PROD_DB_DIALECT", "value": "postgres" },
+        { "name": "PROD_DB_LOGGING", "value": "false" }
+      ],
+      "secrets": [
+        {
+          "name": "JWT_KEY",
+          "valueFrom": "arn:aws:ssm:ap-southeast-3:633630779109:parameter/heavyapp/jwt-secret"
+        }
+      ],
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "hostPort": 3000,
+          "protocol": "tcp"
+        },
+        {
+          "containerPort": 3001,
+          "hostPort": 3001,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/light-app-task",
+          "awslogs-region": "ap-southeast-3",
+          "awslogs-stream-prefix": "ecs",
+          "awslogs-create-group": "true"
+        }
+      }
+    },
+    {
+      "name": "TempDatabase",
+      "image": "postgres:15-alpine",
+      "essential": true,
+      "environment": [
+        { "name": "POSTGRES_DB", "value": "benchmark_db" },
+        { "name": "POSTGRES_USER", "value": "benchmark_user" },
+        { "name": "POSTGRES_PASSWORD", "value": "ambatunat" }
+      ],
+      "portMappings": [
+        {
+          "containerPort": 5432,
+          "hostPort": 5432,
+          "protocol": "tcp"
+        }
+      ]
+    }
+  ]
+}
