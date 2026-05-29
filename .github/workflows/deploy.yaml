@@ -22,7 +22,7 @@ jobs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v5
       with:
-        role-to-assume: ${{ vars.AWS_ROLE_ARN}}
+        role-to-assume: ${{ vars.AWS_ROLE_ARN }}
         aws-region: ${{ vars.AWS_REGION }}
 
     - name: Login to Amazon ECR
@@ -32,19 +32,20 @@ jobs:
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
       env:
+      env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: latest
+        IMAGE_TAG: ${{ github.sha }}
       run: |
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+        docker build -t $ECR_REGISTRY/${{vars.ECR_REPOSITORY}}:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/${{vars.ECR_REPOSITORY}}:$IMAGE_TAG
+        echo "image=$ECR_REGISTRY/${{vars.ECR_REPOSITORY}}:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
     - name: Fill in the new image ID in the Amazon ECS task definition
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
-        task-definition: ${{ vars.ECS_TASK_DEFINITION }}
-        container-name: ${{ vars.CONTAINER_NAME }}
+        task-definition: ./task-definitions.json
+        container-name: LightWeightApp
         image: ${{ steps.build-image.outputs.image }}
 
     - name: Deploy Amazon ECS task definition
