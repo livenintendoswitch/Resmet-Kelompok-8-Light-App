@@ -26,7 +26,7 @@ jobs:
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Login to Azure Container Registry
-      run: az acr login --name ${{ secrets.ACR_NAME }}
+      run: az acr login --name benchmarkacrkel8
 
     - name: Build and Push Docker image
       env:
