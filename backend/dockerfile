@@ -1,0 +1,15 @@
+FROM node:20-alpine 
+WORKDIR /app
+
+# Copy dependency map and install
+COPY package*.json ./
+RUN npm install
+
+# Copy the rest of the backend source code
+COPY . .
+
+# Expose Port 3000 to match our morning script's backend shell
+EXPOSE 3000
+
+# Start the production backend server
+CMD ["npm", "start"]

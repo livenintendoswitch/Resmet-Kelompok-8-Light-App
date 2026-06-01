@@ -1,0 +1,56 @@
+name: Deploy Light App to Azure
+
+on:
+  push:
+    branches:
+      - azure
+
+permissions:
+  id-token: write     
+  contents: read     
+
+jobs:
+  deploy:
+    name: Build and Deploy to Azure
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+
+    - name: Azure Login via OIDC
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Login to Azure Container Registry
+      run: az acr login --name ${{ secrets.ACR_NAME }}
+
+    - name: Build and Push Docker image
+      env:
+        IMAGE_TAG: ${{ github.sha }}
+        ACR_LOGIN_SERVER: benchmarkacrkel8.azurecr.io
+      run: |
+        docker build -t $ACR_LOGIN_SERVER/light-app:$IMAGE_TAG .
+        docker push $ACR_LOGIN_SERVER/light-app:$IMAGE_TAG
+
+    - name: Build and Deploy Backend API
+      uses: azure/container-apps-deploy-action@v1
+      with:
+        acrName: benchmarkacrkel8
+        resourceGroup: benchmark-apps-rg
+        containerAppName: light-app-service
+        appSourcePath: ./backend
+        imageToDeploy: benchmarkacrkel8.azurecr.io/light-app-backend:${{ github.sha }}
+
+
+    - name: Build and Deploy Frontend UI
+      uses: azure/container-apps-deploy-action@v1
+      with:
+        acrName: benchmarkacrkel8
+        resourceGroup: benchmark-apps-rg
+        containerAppName: light-app-frontend
+        appSourcePath: ./frontend
+        imageToDeploy: benchmarkacrkel8.azurecr.io/light-app-frontend:${{ github.sha }}

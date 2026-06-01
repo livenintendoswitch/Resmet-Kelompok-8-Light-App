@@ -1,0 +1,21 @@
+FROM node:20-alpine 
+WORKDIR /app
+
+# Copy dependency map and install
+COPY package*.json ./
+RUN npm install
+
+# Copy the rest of the frontend source code
+COPY . .
+
+# Compile the React/Vite code into the /dist folder
+RUN npm run build
+
+# Install the 'serve' package globally
+RUN npm install -g serve
+
+# Expose Port 80 to match our morning script's frontend shell
+EXPOSE 80
+
+# Serve the compiled /dist folder on port 80
+CMD ["serve", "-s", "dist", "-l", "80"]
