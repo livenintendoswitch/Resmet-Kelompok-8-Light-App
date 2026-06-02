@@ -48,5 +48,4 @@ jobs:
         appSourcePath: ./frontend
         dockerfilePath: dockerfile
         imageToDeploy: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/light-app-frontend:${{ github.sha }}
-        buildArgs: |
-          VITE_API_URL=https://${{ env.BACKEND_APP_NAME }}.${{ env.AZURE_RESOURCE_GROUP }}.southeastasia.azurecontainerapps.io
+        environmentVariables: VITE_API_URL=https://${{ env.BACKEND_APP_NAME }}.${{ env.AZURE_RESOURCE_GROUP }}.southeastasia.azurecontainerapps.io
