@@ -1,56 +1,48 @@
-name: Deploy Light App to Azure
-
+name: Deploy to Azure
 on:
   push:
     branches:
-      - azure
+      - azure 
 
 permissions:
-  id-token: write     
-  contents: read     
+  id-token: write
+  contents: read
+
+# EXPLICIT CONFIGURATION MAP
+env:
+  AZURE_RESOURCE_GROUP: benchmark-apps-rg
+  AZURE_CONTAINER_REGISTRY: benchmarkacrkel8
+  BACKEND_APP_NAME: light-app-service
+  FRONTEND_APP_NAME: light-app-frontend
 
 jobs:
-  deploy:
-    name: Build and Deploy to Azure
+  build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout Repo
+    - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Azure Login via OIDC
+    - name: Log in to Azure
       uses: azure/login@v2
       with:
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    - name: Login to Azure Container Registry
-      run: az acr login --name benchmarkacrkel8
-
-    - name: Build and Push Docker image
-      env:
-        IMAGE_TAG: ${{ github.sha }}
-        ACR_LOGIN_SERVER: benchmarkacrkel8.azurecr.io
-      run: |
-        docker build -t $ACR_LOGIN_SERVER/light-app:$IMAGE_TAG .
-        docker push $ACR_LOGIN_SERVER/light-app:$IMAGE_TAG
-
     - name: Build and Deploy Backend API
-      uses: azure/container-apps-deploy-action@v1
+      uses: azure/container-apps-deploy-action@v2
       with:
-        acrName: benchmarkacrkel8
-        resourceGroup: benchmark-apps-rg
-        containerAppName: light-app-service
+        resourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
+        acrName: ${{ env.AZURE_CONTAINER_REGISTRY }}
+        containerAppName: ${{ env.BACKEND_APP_NAME }}
         appSourcePath: ./backend
-        imageToDeploy: benchmarkacrkel8.azurecr.io/light-app-backend:${{ github.sha }}
-
+        imageToDeploy: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/light-app-backend:${{ github.sha }}
 
     - name: Build and Deploy Frontend UI
-      uses: azure/container-apps-deploy-action@v1
+      uses: azure/container-apps-deploy-action@v2
       with:
-        acrName: benchmarkacrkel8
-        resourceGroup: benchmark-apps-rg
-        containerAppName: light-app-frontend
+        resourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
+        acrName: ${{ env.AZURE_CONTAINER_REGISTRY }}
+        containerAppName: ${{ env.FRONTEND_APP_NAME }}
         appSourcePath: ./frontend
-        imageToDeploy: benchmarkacrkel8.azurecr.io/light-app-frontend:${{ github.sha }}
+        imageToDeploy: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/light-app-frontend:${{ github.sha }}
