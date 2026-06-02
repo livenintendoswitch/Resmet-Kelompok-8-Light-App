@@ -30,7 +30,7 @@ jobs:
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Build and Deploy Backend API
-      uses: azure/container-apps-deploy-action@v2
+      uses: azure/container-apps-deploy-action@v1
       with:
         resourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
         acrName: ${{ env.AZURE_CONTAINER_REGISTRY }}
@@ -39,7 +39,7 @@ jobs:
         imageToDeploy: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/light-app-backend:${{ github.sha }}
 
     - name: Build and Deploy Frontend UI
-      uses: azure/container-apps-deploy-action@v2
+      uses: azure/container-apps-deploy-action@v1
       with:
         resourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
         acrName: ${{ env.AZURE_CONTAINER_REGISTRY }}
