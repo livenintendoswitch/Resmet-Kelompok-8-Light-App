@@ -38,12 +38,6 @@ jobs:
         appSourcePath: ./backend
         dockerfilePath: dockerfile
         imageToDeploy: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/light-app-backend:${{ github.sha }}
-        environmentVariables: |
-          DB_HOST=light-app-db
-          DB_PORT=5432
-          DB_USER=postgres
-          DB_PASSWORD=ambatunat
-          DB_NAME=postgres
 
     - name: Build and Deploy Frontend UI
       uses: azure/container-apps-deploy-action@v1
@@ -52,6 +46,5 @@ jobs:
         acrName: ${{ env.AZURE_CONTAINER_REGISTRY }}
         containerAppName: ${{ env.FRONTEND_APP_NAME }}
         appSourcePath: ./frontend
-        dockerfilePath: dockerfile
+        dockerfilePath: Dockerfile
         imageToDeploy: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/light-app-frontend:${{ github.sha }}
-        environmentVariables: VITE_API_URL=https://${{ env.BACKEND_APP_NAME }}.${{ env.AZURE_RESOURCE_GROUP }}.southeastasia.azurecontainerapps.io
