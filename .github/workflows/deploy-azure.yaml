@@ -36,7 +36,7 @@ jobs:
         acrName: ${{ env.AZURE_CONTAINER_REGISTRY }}
         containerAppName: ${{ env.BACKEND_APP_NAME }}
         appSourcePath: ./backend
-        dockerfilePath: ./backend/dockerfile
+        dockerfilePath: dockerfile
         imageToDeploy: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/light-app-backend:${{ github.sha }}
 
     - name: Build and Deploy Frontend UI
@@ -46,5 +46,5 @@ jobs:
         acrName: ${{ env.AZURE_CONTAINER_REGISTRY }}
         containerAppName: ${{ env.FRONTEND_APP_NAME }}
         appSourcePath: ./frontend
-        dockerfilePath: ./frontend/dockerfile
+        dockerfilePath: dockerfile
         imageToDeploy: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/light-app-frontend:${{ github.sha }}
