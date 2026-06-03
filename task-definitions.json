@@ -7,11 +7,12 @@
   "executionRoleArn": "arn:aws:iam::633630779109:role/ecsTaskExecutionRole",
   "containerDefinitions": [
     {
-      "name": "LightWeightApp",
+      "name": "BackendApp",
       "image": "633630779109.dkr.ecr.ap-southeast-3.amazonaws.com/resmetkelompok8lightapp",
       "essential": true,
       "environment": [
         { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT", "value": "3001" },
         { "name": "PROD_DB_NAME", "value": "benchmark_db" },
         { "name": "PROD_DB_HOSTNAME", "value": "127.0.0.1" },
         { "name": "PROD_DB_USERNAME", "value": "benchmark_user" },
@@ -27,11 +28,6 @@
       ],
       "portMappings": [
         {
-          "containerPort": 3000,
-          "hostPort": 3000,
-          "protocol": "tcp"
-        },
-        {
           "containerPort": 3001,
           "hostPort": 3001,
           "protocol": "tcp"
@@ -42,7 +38,32 @@
         "options": {
           "awslogs-group": "/ecs/light-app-task",
           "awslogs-region": "ap-southeast-3",
-          "awslogs-stream-prefix": "ecs",
+          "awslogs-stream-prefix": "ecs-backend",
+          "awslogs-create-group": "true"
+        }
+      }
+    },
+    {
+      "name": "FrontendApp",
+      "image": "633630779109.dkr.ecr.ap-southeast-3.amazonaws.com/resmetkelompok8lightapp-frontend",
+      "essential": true,
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT", "value": "3000" }
+      ],
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "hostPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/light-app-task",
+          "awslogs-region": "ap-southeast-3",
+          "awslogs-stream-prefix": "ecs-frontend",
           "awslogs-create-group": "true"
         }
       }
