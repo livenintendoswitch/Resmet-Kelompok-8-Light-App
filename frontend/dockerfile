@@ -8,9 +8,6 @@ COPY . .
 RUN npm run build
 RUN npm install -g serve
 
-# Copy the startup script and make it executable
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
-
 EXPOSE 80
-CMD ["/start.sh"]
+
+CMD echo "window._env_ = { VITE_API_URL: \"$VITE_API_URL\" };" > /app/dist/env-config.js && serve -s dist -l 80
