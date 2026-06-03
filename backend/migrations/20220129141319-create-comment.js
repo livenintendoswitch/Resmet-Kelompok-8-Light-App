@@ -11,6 +11,20 @@ module.exports = {
       body: {
         type: Sequelize.TEXT
       },
+      articleId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: { model: 'Articles', key: 'id' },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+      },
+      userId: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: { model: 'Users', key: 'id' },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE

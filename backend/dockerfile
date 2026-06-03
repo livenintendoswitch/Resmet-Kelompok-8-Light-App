@@ -8,4 +8,4 @@ COPY . .
 
 EXPOSE 3000
 
-CMD npx sequelize-cli db:migrate && npx sequelize-cli db:seed:all && npm start
+CMD npx sequelize-cli db:migrate && npm start
