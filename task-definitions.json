@@ -90,6 +90,15 @@
           "protocol": "tcp"
         }
       ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/light-app-task",
+          "awslogs-region": "ap-southeast-3",
+          "awslogs-stream-prefix": "ecs-frontend",
+          "awslogs-create-group": "true"
+        }
+      },
       "healthCheck": {
         "command": ["CMD-SHELL", "pg_isready -U benchmark_user -d benchmark_db"],
         "interval": 5,
