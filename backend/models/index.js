@@ -8,6 +8,10 @@ const env = process.env.NODE_ENV || "development";
 const config = require(__dirname + "/../config/config.js")[env];
 const db = {};
 
+if (config.logging === 'false' || config.logging === 'undefined') {
+  config.logging = false;
+}
+
 const sequelize = new Sequelize(
   config.database,
   config.username,
