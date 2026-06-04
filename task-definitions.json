@@ -8,8 +8,14 @@
   "containerDefinitions": [
     {
       "name": "BackendApp",
-      "image": "633630779109.dkr.ecr.ap-southeast-3.amazonaws.com/resmetkelompok8lightapp@latest",
+      "image": "633630779109.dkr.ecr.ap-southeast-3.amazonaws.com/resmetkelompok8lightapp",
       "essential": true,
+      "DependsOn": [
+        {
+          "containerName": "TempDatabase",
+          "condition": "HEALTHY"
+        }
+      ],
       "environment": [
         { "name": "NODE_ENV", "value": "production" },
         { "name": "PORT", "value": "3001" },
@@ -45,7 +51,7 @@
     },
     {
       "name": "FrontendApp",
-      "image": "633630779109.dkr.ecr.ap-southeast-3.amazonaws.com/resmetkelompok8lightapp-frontend@latest",
+      "image": "633630779109.dkr.ecr.ap-southeast-3.amazonaws.com/resmetkelompok8lightapp-frontend",
       "essential": true,
       "environment": [
         { "name": "NODE_ENV", "value": "production" },
@@ -83,7 +89,14 @@
           "hostPort": 5432,
           "protocol": "tcp"
         }
-      ]
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "pg_isready -U benchmark_user -d benchmark_db"],
+        "interval": 5,
+        "timeout": 5,
+        "retries": 5,
+        "startPeriod": 10
+      }
     }
   ]
 }
