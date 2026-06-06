@@ -63,7 +63,7 @@ pipeline {
                         docker push \${IMAGE_URI}
 
                         echo "📋 Injecting new Image URI into \$SERVICE task-definitions.json..."
-                        jq "(.containerDefinitions[0]).image = \\"\${IMAGE_URI}\\"" ./task-definitions.json > updated-task-def.json
+                        jq "(.containerDefinitions[0]).image = \"\${IMAGE_URI}\"" ../task-definitions.json > updated-task-def.json
 
                         echo "🚀 Registering Task Revision & Updating Fargate Service..."
                         NEW_TASK_ARN=\$(aws ecs register-task-definition --cli-input-json file://updated-task-def.json --region \${AWS_REGION} --query 'taskDefinition.taskDefinitionArn' --output text)
