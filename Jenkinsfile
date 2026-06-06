@@ -2,9 +2,7 @@ pipeline {
     agent any
 
     environment {
-        // 🛠️ DEFINE YOUR MICROSERVICES HERE
-        // These names MUST match exactly with your folder names in GitHub
-        // They should also match your ECR repository names and ECS service names
+        // These MUST match the exact folder names in your GitHub repository
         SERVICES = "frontend backend" 
     }
 
@@ -21,7 +19,7 @@ pipeline {
 
         stage('Deploy Microservices to Fargate') {
             steps {
-                withCredentials([file(credentialsId: 'aws-deployment-config-light', variable: 'INFRA_CONFIG')]) {
+                withCredentials([file(credentialsId: 'aws-light-config', variable: 'INFRA_CONFIG')]) {
                     sh """
                     echo "⚙️ Loading base infrastructure configuration..."
                     set -a
@@ -35,7 +33,7 @@ pipeline {
                     echo "🚀 Logging into Amazon ECR..."
                     aws ecr get-login-password --region \${AWS_REGION} | docker login --username AWS --password-stdin \${REGISTRY_URL}
 
-                    # 🔄 LOOP THROUGH EACH MICROSERVICE
+                    # 🔄 LOOP THROUGH EACH MICROSERVICE FOLDER
                     for SERVICE in \$SERVICES; do
                         echo "========================================="
                         echo "🏗️  STARTING DEPLOYMENT FOR: \$SERVICE"
@@ -44,9 +42,20 @@ pipeline {
                         # Navigate into the microservice directory
                         cd \$SERVICE
 
-                        # Define dynamic names based on the folder name
-                        # We assume ECR repo is named 'light-app-[servicename]'
-                        ECR_REPO="light-app-\${SERVICE}"
+                        # 🎯 THE TRANSLATOR: Map folders to exact AWS Resource Names
+                        if [ "\$SERVICE" = "frontend" ]; then
+                            ECR_REPO="resmetkelompok8lightapp-frontend"
+                            ECS_SVC="resmetkelompok8lightapp-frontend" # Update this if your ECS Service has a different name!
+                            
+                        elif [ "\$SERVICE" = "backend" ]; then
+                            ECR_REPO="resmetkelompok8lightapp"
+                            ECS_SVC="resmetkelompok8lightapp" # Update this if your ECS Service has a different name!
+                            
+                        else
+                            echo "❌ Unknown service folder: \$SERVICE"
+                            exit 1
+                        fi
+
                         IMAGE_URI="\${REGISTRY_URL}/\${ECR_REPO}:\${GIT_COMMIT}"
 
                         echo "🔨 Packaging and Pushing Docker Image for \$SERVICE..."
@@ -59,8 +68,7 @@ pipeline {
                         echo "🚀 Registering Task Revision & Updating Fargate Service..."
                         NEW_TASK_ARN=\$(aws ecs register-task-definition --cli-input-json file://updated-task-def.json --region \${AWS_REGION} --query 'taskDefinition.taskDefinitionArn' --output text)
                         
-                        # We assume your ECS Service is named exactly the same as the folder name
-                        aws ecs update-service --cluster \${ECS_CLUSTER} --service \${SERVICE} --task-definition \${NEW_TASK_ARN} --region \${AWS_REGION}
+                        aws ecs update-service --cluster \${ECS_CLUSTER} --service \${ECS_SVC} --task-definition \${NEW_TASK_ARN} --region \${AWS_REGION}
                         
                         echo "✅ \$SERVICE Deployment successful!"
                         
