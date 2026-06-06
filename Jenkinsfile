@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        // These MUST match the exact folder names in your GitHub repository
-        SERVICES = "frontend backend" 
-    }
-
     triggers {
         githubPush()
     }
@@ -17,7 +12,7 @@ pipeline {
             }
         }
 
-        stage('Deploy Microservices to Fargate') {
+        stage('Deploy Multi-Container App to Fargate') {
             steps {
                 withCredentials([file(credentialsId: 'aws-deployment-config-light', variable: 'INFRA_CONFIG')]) {
                     sh """
@@ -26,59 +21,54 @@ pipeline {
                     . \$INFRA_CONFIG
                     set +a
 
-                    # Extract the AWS Account ID from the Role ARN
                     AWS_ACCOUNT_ID=\$(echo "\${AWS_ROLE_ARN}" | cut -d':' -f5)
                     REGISTRY_URL="\${AWS_ACCOUNT_ID}.dkr.ecr.\${AWS_REGION}.amazonaws.com"
+                    ECS_SVC="light-app-benchmark-jenkins"
 
                     echo "🚀 Logging into Amazon ECR..."
                     aws ecr get-login-password --region \${AWS_REGION} | docker login --username AWS --password-stdin \${REGISTRY_URL}
 
-                    # 🔄 LOOP THROUGH EACH MICROSERVICE FOLDER
-                    for SERVICE in \$SERVICES; do
-                        echo "========================================="
-                        echo "🏗️  STARTING DEPLOYMENT FOR: \$SERVICE"
-                        echo "========================================="
-                        
-                        # Navigate into the microservice directory
-                        cd \$SERVICE
-
-                        # 🎯 THE TRANSLATOR: Map folders to exact AWS Resource Names
-                        if [ "\$SERVICE" = "frontend" ]; then
-                            ECR_REPO="resmetkelompok8lightapp-frontend"
-                            ECS_SVC="resmetkelompok8lightapp-frontend" # Update this if your ECS Service has a different name!
-                            
-                        elif [ "\$SERVICE" = "backend" ]; then
-                            ECR_REPO="resmetkelompok8lightapp"
-                            ECS_SVC="resmetkelompok8lightapp" # Update this if your ECS Service has a different name!
-                            
-                        else
-                            echo "❌ Unknown service folder: \$SERVICE"
-                            exit 1
-                        fi
-
-                        IMAGE_URI="\${REGISTRY_URL}/\${ECR_REPO}:\${GIT_COMMIT}"
-
-                        echo "🔨 Packaging and Pushing Docker Image for \$SERVICE..."
-                        docker build -t \${IMAGE_URI} .
-                        docker push \${IMAGE_URI}
-
-                        echo "📋 Injecting new Image URI into task-definitions.json..."
-                        # Notice the ../ to pull the file from the root directory
-                        jq "(.containerDefinitions[0]).image = \\"\${IMAGE_URI}\\"" ../task-definitions.json > updated-task-def.json
-
-                        echo "🚀 Registering Task Revision & Updating Fargate Service..."
-                        NEW_TASK_ARN=\$(aws ecs register-task-definition --cli-input-json file://updated-task-def.json --region \${AWS_REGION} --query 'taskDefinition.taskDefinitionArn' --output text)
-                        
-                        aws ecs update-service --cluster \${ECS_CLUSTER} --service \${ECS_SVC} --task-definition \${NEW_TASK_ARN} --region \${AWS_REGION}
-                        
-                        echo "✅ \$SERVICE Deployment successful!"
-                        
-                        # Clean up and step back to the root directory for the next loop iteration
-                        rm -f updated-task-def.json
-                        cd ..
-                    done
+                    # =========================================
+                    # 1️⃣ BUILD AND PUSH FRONTEND
+                    # =========================================
+                    echo "🏗️ Building Frontend..."
+                    cd frontend
+                    FRONTEND_REPO="resmetkelompok8lightapp-frontend"
+                    FRONTEND_IMAGE="\${REGISTRY_URL}/\${FRONTEND_REPO}:\${GIT_COMMIT}"
                     
-                    echo "🎉 All microservices deployed successfully!"
+                    docker build -t \${FRONTEND_IMAGE} .
+                    docker push \${FRONTEND_IMAGE}
+                    cd .. # Go back to root
+
+                    # =========================================
+                    # 2️⃣ BUILD AND PUSH BACKEND
+                    # =========================================
+                    echo "🏗️ Building Backend..."
+                    cd backend
+                    BACKEND_REPO="resmetkelompok8lightapp"
+                    BACKEND_IMAGE="\${REGISTRY_URL}/\${BACKEND_REPO}:\${GIT_COMMIT}"
+                    
+                    docker build -t \${BACKEND_IMAGE} .
+                    docker push \${BACKEND_IMAGE}
+                    cd .. # Go back to root
+
+                    # =========================================
+                    # 3️⃣ INJECT BOTH IMAGES & DEPLOY ONCE
+                    # =========================================
+                    echo "📋 Injecting Image URIs into task-definitions.json..."
+                    
+                    # ⚠️ MATCHING YOUR JSON: [0] is Backend, [1] is Frontend
+                    jq "(.containerDefinitions[0]).image = \\"\${BACKEND_IMAGE}\\" | (.containerDefinitions[1]).image = \\"\${FRONTEND_IMAGE}\\"" ./task-definitions.json > updated-task-def.json
+
+                    echo "🚀 Registering Task Revision & Updating Fargate Service..."
+                    NEW_TASK_ARN=\$(aws ecs register-task-definition --cli-input-json file://updated-task-def.json --region \${AWS_REGION} --query 'taskDefinition.taskDefinitionArn' --output text)
+                    
+                    aws ecs update-service --cluster \${ECS_CLUSTER} --service \${ECS_SVC} --task-definition \${NEW_TASK_ARN} --region \${AWS_REGION}
+                    
+                    echo "✅ Multi-Container Deployment successful!"
+                    
+                    # Clean up
+                    rm -f updated-task-def.json
                     """
                 }
             }
