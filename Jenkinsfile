@@ -47,7 +47,7 @@ pipeline {
                 echo '========================================================================'
                 
                 // Only one update command is needed now
-                echo "az containerapp update --name \${APP_NAME} --resource-group \${RG_NAME} --image \${ACR_NAME}.azurecr.io/\${APP_NAME}:\${GIT_COMMIT}"
+                echo "az containerapp update --name ${APP_NAME} --resource-group ${RG_NAME} --image ${ACR_NAME}.azurecr.io/${APP_NAME}:${GIT_COMMIT}"
             }
         }
     }
