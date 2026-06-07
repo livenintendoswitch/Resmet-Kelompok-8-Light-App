@@ -6,18 +6,10 @@ pipeline {
     }
 
     environment {
-        // Your Azure Environment Variables
         ACR_NAME              = 'benchmarkacrkel8'
         RG_NAME               = 'benchmark-apps-rg'
-        
-        // Azure handles microservices best as two linked Container Apps
         FRONTEND_APP_NAME     = 'light-app-frontend'
         BACKEND_APP_NAME      = 'light-app-service'
-        
-        // Azure Service Principal Details
-        AZURE_SUBSCRIPTION_ID = 'your-subscription-id' 
-        AZURE_TENANT_ID       = 'your-tenant-id'       
-        AZURE_CLIENT_ID       = 'your-sp-app-id'       
     }
 
     stages {
@@ -43,7 +35,7 @@ pipeline {
                     
                     docker build -t \${FRONTEND_IMAGE} .
                     docker push \${FRONTEND_IMAGE}
-                    cd .. # Go back to root
+                    cd .. 
 
                     # =========================================
                     # 2️⃣ BUILD AND PUSH BACKEND
@@ -54,40 +46,25 @@ pipeline {
                     
                     docker build -t \${BACKEND_IMAGE} .
                     docker push \${BACKEND_IMAGE}
-                    cd .. # Go back to root
+                    cd .. 
                     """
                 }
             }
         }
 
-        stage('Deploy Microservices to Azure Container Apps') {
+        stage('Manual Deployment Step') {
             steps {
-                // This replaces the complex jq JSON injection you had to do in AWS.
-                // Azure lets us update the services directly via the CLI.
-                withCredentials([string(credentialsId: 'AZURE_SP_PASSWORD', variable: 'SP_PASSWORD')]) {
-                    sh """
-                    echo "🔐 Authenticating Jenkins with Azure..."
-                    az login --service-principal -u \${AZURE_CLIENT_ID} -p \${SP_PASSWORD} --tenant \${AZURE_TENANT_ID}
-                    az account set --subscription \${AZURE_SUBSCRIPTION_ID}
-
-                    FRONTEND_IMAGE="\${ACR_NAME}.azurecr.io/\${FRONTEND_APP_NAME}:\${GIT_COMMIT}"
-                    BACKEND_IMAGE="\${ACR_NAME}.azurecr.io/\${BACKEND_APP_NAME}:\${GIT_COMMIT}"
-
-                    echo "🚀 Updating Backend Container App..."
-                    az containerapp update \\
-                        --name \${BACKEND_APP_NAME} \\
-                        --resource-group \${RG_NAME} \\
-                        --image \${BACKEND_IMAGE}
-
-                    echo "🚀 Updating Frontend Container App..."
-                    az containerapp update \\
-                        --name \${FRONTEND_APP_NAME} \\
-                        --resource-group \${RG_NAME} \\
-                        --image \${FRONTEND_IMAGE}
-
-                    echo "✅ Multi-Container Deployment successful!"
-                    """
-                }
+                // We strip out the failing Service Principal login and instead 
+                // output the exact commands you need to run locally.
+                echo '========================================================================'
+                echo '✅ BUILD & PUSH SUCCESSFUL!'
+                echo '⚠️ AUTOMATED DEPLOYMENT BLOCKED BY AZURE DIRECTORY PERMISSIONS'
+                echo 'Run these exact commands on your local Mac terminal to deploy the new code:'
+                echo '========================================================================'
+                
+                echo "az containerapp update --name \${BACKEND_APP_NAME} --resource-group \${RG_NAME} --image \${ACR_NAME}.azurecr.io/\${BACKEND_APP_NAME}:\${GIT_COMMIT}"
+                
+                echo "az containerapp update --name \${FRONTEND_APP_NAME} --resource-group \${RG_NAME} --image \${ACR_NAME}.azurecr.io/\${FRONTEND_APP_NAME}:\${GIT_COMMIT}"
             }
         }
     }
