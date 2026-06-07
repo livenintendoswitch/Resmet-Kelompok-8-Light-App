@@ -8,8 +8,9 @@ pipeline {
     environment {
         ACR_NAME              = 'benchmarkacrkel8'
         RG_NAME               = 'benchmark-apps-rg'
-        FRONTEND_APP_NAME     = 'light-app-frontend'
-        BACKEND_APP_NAME      = 'light-app-service'
+        
+        // Since there is only one Dockerfile, we only need one app name
+        APP_NAME              = 'light-app-service' 
     }
 
     stages {
@@ -19,34 +20,19 @@ pipeline {
             }
         }
 
-        stage('Build & Push Images to ACR') {
+        stage('Build & Push Image to ACR') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'ACR_CREDENTIALS', passwordVariable: 'ACR_PASSWORD', usernameVariable: 'ACR_USER')]) {
                     sh """
                     echo "🚀 Logging into Azure Container Registry..."
                     docker login \${ACR_NAME}.azurecr.io -u \${ACR_USER} -p \${ACR_PASSWORD}
 
-                    # =========================================
-                    # 1️⃣ BUILD AND PUSH FRONTEND
-                    # =========================================
-                    echo "🏗️ Building Frontend..."
-                    cd frontend
-                    FRONTEND_IMAGE="\${ACR_NAME}.azurecr.io/\${FRONTEND_APP_NAME}:\${GIT_COMMIT}"
+                    echo "🏗️ Building Application..."
+                    IMAGE_URI="\${ACR_NAME}.azurecr.io/\${APP_NAME}:\${GIT_COMMIT}"
                     
-                    docker build -t \${FRONTEND_IMAGE} .
-                    docker push \${FRONTEND_IMAGE}
-                    cd .. 
-
-                    # =========================================
-                    # 2️⃣ BUILD AND PUSH BACKEND
-                    # =========================================
-                    echo "🏗️ Building Backend..."
-                    cd backend
-                    BACKEND_IMAGE="\${ACR_NAME}.azurecr.io/\${BACKEND_APP_NAME}:\${GIT_COMMIT}"
-                    
-                    docker build -t \${BACKEND_IMAGE} .
-                    docker push \${BACKEND_IMAGE}
-                    cd .. 
+                    # The '.' tells Docker to build the Dockerfile in the current root directory
+                    docker build -t \${IMAGE_URI} .
+                    docker push \${IMAGE_URI}
                     """
                 }
             }
@@ -54,17 +40,14 @@ pipeline {
 
         stage('Manual Deployment Step') {
             steps {
-                // We strip out the failing Service Principal login and instead 
-                // output the exact commands you need to run locally.
                 echo '========================================================================'
                 echo '✅ BUILD & PUSH SUCCESSFUL!'
                 echo '⚠️ AUTOMATED DEPLOYMENT BLOCKED BY AZURE DIRECTORY PERMISSIONS'
-                echo 'Run these exact commands on your local Mac terminal to deploy the new code:'
+                echo 'Run this exact command on your local Mac terminal to deploy the new code:'
                 echo '========================================================================'
                 
-                echo "az containerapp update --name \${BACKEND_APP_NAME} --resource-group \${RG_NAME} --image \${ACR_NAME}.azurecr.io/\${BACKEND_APP_NAME}:\${GIT_COMMIT}"
-                
-                echo "az containerapp update --name \${FRONTEND_APP_NAME} --resource-group \${RG_NAME} --image \${ACR_NAME}.azurecr.io/\${FRONTEND_APP_NAME}:\${GIT_COMMIT}"
+                // Only one update command is needed now
+                echo "az containerapp update --name \${APP_NAME} --resource-group \${RG_NAME} --image \${ACR_NAME}.azurecr.io/\${APP_NAME}:\${GIT_COMMIT}"
             }
         }
     }
