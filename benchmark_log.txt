@@ -5,3 +5,4 @@ light app normal run 4 - Wed Jun 10 03:48:20 WIB 2026
 light app normal run 5 - Wed Jun 10 03:49:08 WIB 2026
 light app failed deploy 1 - Wed Jun 10 03:49:55 WIB 2026
 light app rollback 1 - Wed Jun 10 03:50:12 WIB 2026
+light app failed deploy 2 - Wed Jun 10 03:51:00 WIB 2026
