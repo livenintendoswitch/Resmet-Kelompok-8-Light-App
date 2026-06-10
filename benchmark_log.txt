@@ -18,3 +18,4 @@ light app normal run 2 - Wed Jun 10 20:13:07 WIB 2026
 light app normal run 3 - Wed Jun 10 20:13:59 WIB 2026
 light app normal run 4 - Wed Jun 10 20:14:49 WIB 2026
 light app normal run 5 - Wed Jun 10 20:15:38 WIB 2026
+light app failed deploy 1 - Wed Jun 10 20:16:27 WIB 2026
