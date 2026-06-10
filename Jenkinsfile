@@ -14,7 +14,7 @@ pipeline {
 
         stage('Deploy Multi-Container App to Fargate') {
             steps {
-                withCredentials([file(credentialsId: 'aws-deployment-config-light', variable: 'INFRA_CONFIG')]) {
+                withCredentials([file(credentialsId: 'aws', variable: 'INFRA_CONFIG')]) {
                     sh """
                     echo "⚙️ Loading base infrastructure configuration..."
                     set -a
